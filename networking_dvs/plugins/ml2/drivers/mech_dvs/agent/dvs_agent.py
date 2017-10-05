@@ -44,6 +44,9 @@ from networking_dvs.common.util import dict_merge, stats
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
 
+def touch_file(fname, times=None):
+    with open(fname, 'a'):
+        os.utime(fname, times)
 
 class DVSPluginApi(agent_rpc.PluginApi):
     pass
@@ -415,6 +418,7 @@ class DvsNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
             port_desc.firewall_start = now
 
     def rpc_loop(self):
+        touch_file('/tmp/neutron-dvs-agent.alive')
         while self._check_and_handle_signal():
             with timeutils.StopWatch() as w:
                 self.process_ports()
