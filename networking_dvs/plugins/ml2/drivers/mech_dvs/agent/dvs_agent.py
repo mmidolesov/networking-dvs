@@ -135,20 +135,31 @@ class DvsNeutronAgent(sg_rpc.SecurityGroupAgentRpcCallbackMixin,
         dvs = None
         dvs_segment = None
         for segment in network_segments:
-            if segment['physical_network'] in self.api.network_dvs_map:
+            physical_network = segment["physical_network"]
+            dvs = self.api.network_dvs_map.get(physical_network, None)
+            if dvs:
                 dvs_segment = segment
-                dvs =  self.api.network_dvs_map[segment['physical_network']]
+                break
+
+        if not dvs:
+            return {}
 
         sg_set = sg_util.security_group_set(port)
         dvpg_name = dvs_util.dvportgroup_name(dvs.uuid, sg_set)
-        # First, check if we have that port-group already
-        try:
-            dvs._get_pg_by_name(dvpg_name, refresh_if_missing=False)
-            LOG.debug("Port group exists: %(dvpg_name)s", dvpg_name=dvpg_name)
-            return {'bridge_name': dvpg_name}
-        except exceptions.PortGroupNotFound:
-            LOG.debug("Port group does not exists: %(dvpg_name)s", dvpg_name=dvpg_name)
-            return {}
+
+        sg_set_rules = []
+        client_factory = dvs.connection.vim.client.factory
+        builder = sg_util.PortConfigSpecBuilder(client_factory)
+        port_config = sg_util.port_configuration(
+                builder, None, sg_set_rules, {}, None, None).setting
+        port_config.vlan = builder.vlan(dvs_segment["segmentation_id"])
+
+        pg = dvs.create_dvportgroup(sg_set, port_config, update=False)
+
+        if not pg:
+            return None
+
+        return {"bridge_name": pg["name"]}
 
     def port_update(self, context, **kwargs):
         LOG.info("port_update message {}".format(kwargs))

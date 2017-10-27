@@ -483,6 +483,14 @@ class DVSController(object):
 
         dvpg_name = dvportgroup_name(self.uuid, sg_set)
 
+        portgroups = self._get_portgroups()
+        if dvpg_name in portgroups:
+            existing = portgroups[dvpg_name]
+
+            if update:
+                self.update_dvportgroup(existing, port_config)
+            return existing
+
         try:
             pg_spec = self.builder.pg_config(port_config)
             pg_spec.name = dvpg_name
@@ -507,6 +515,7 @@ class DVSController(object):
 
             values = {"key": props["key"],
                       "ref": pg_ref,
+                      "name": dvpg_name,
                       "configVersion": 0,
                       "description": sg_set,
                       "defaultPortConfig": port_config
@@ -515,7 +524,7 @@ class DVSController(object):
             return values
         except vmware_exceptions.DuplicateName as dn:
             LOG.info("Untagged portgroup with matching name {} found, will update and use.".format(dvpg_name))
-            portgroups = self._get_portgroups()
+
             if dvpg_name not in portgroups:
                 portgroups = self._get_portgroups(refresh=True)
 

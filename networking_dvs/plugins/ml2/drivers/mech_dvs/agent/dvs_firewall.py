@@ -113,7 +113,15 @@ class DvsSecurityGroupsDriver(firewall.FirewallDriver):
                 if not sg_set:
                     LOG.debug("Port {} has no security group set, skipping processing.".format(port['id']))
                     continue
+
                 sg_aggr = self._sg_aggregates_per_dvs_uuid[dvs_uuid][sg_set]
+                if not sg_aggr.pg_key:
+                    dvs = self.v_center.get_dvs_by_uuid(dvs_uuid)
+                    pg_per_sg = dvs.get_port_group_by_security_group()
+                    pg = pg_per_sg.get(sg_set, {})
+                    if pg:
+                        sg_aggr.pg_key = pg["key"]
+                        sg_aggr.vlan = pg["defaultPortConfig"].vlan.vlanId
 
                 # Schedule for reassignment
                 if not decrement:
@@ -180,7 +188,7 @@ class DvsSecurityGroupsDriver(firewall.FirewallDriver):
         ports = sg_aggr.ports_to_assign
         sg_aggr.ports_to_assign = []
 
-        if not sg_aggr.vlan:
+        if not sg_aggr.vlan and ports:
             vlan_ids = Counter([ port['segmentation_id']
                     for port in ports
                     if 'vlan' == port.get('network_type', None) and port.get('segmentation_id', None) ])
