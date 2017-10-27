@@ -60,7 +60,7 @@ class Rule(object):
         return self.__dict__[key]
 
     def get(self, key, default=None):
-        return self.__dict__[key] or default
+        return self.__dict__.get(key, default)
 
 @attr.s(cmp=True, hash=True)
 class SgAggr(object):
@@ -272,7 +272,6 @@ def get_port_rules(client_factory, ports):
     hashed_rules = {}
     return build_port_rules(builder, ports, hashed_rules)
 
-
 def port_configuration(builder, port_key, sg_rules, hashed_rules, version=None, filter_config_key=None):
     sg_rules = sg_rules or []
     rules = []
@@ -348,10 +347,10 @@ def _create_rule(builder, rule_info, ip=None, name=None):
         rule.port_range = (rule_info.get('port_range_min'),
                            rule_info.get('port_range_max'))
         rule.backward_port_range = (
-            rule_info.get(
-                'source_port_range_min') or source_port_range_min_default,
-            rule_info.get(
-                'source_port_range_max') or dvs_const.MAX_EPHEMERAL_PORT)
+            rule_info.get('source_port_range_min',
+                          source_port_range_min_default),
+            rule_info.get('source_port_range_max',
+                          dvs_const.MAX_EPHEMERAL_PORT))
     return rule
 
 
