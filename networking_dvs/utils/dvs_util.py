@@ -135,13 +135,15 @@ class DVSController(object):
         self.hosts_to_rectify = {}
         self.rectify_wait = rectify_wait
 
-        self._port_groups_by_name = {}
         try:
             self._dvs, self._datacenter = self._get_dvs(dvs_name, connection)
             # (SlOPS) To do release blocked port after use
             self._blocked_ports = set()
         except vmware_exceptions.VimException as e:
             raise exceptions.wrap_wmvare_vim_exception(e)
+
+        self._port_groups_by_name = {}
+        self._get_portgroups(refresh=True)
 
     @property
     def uuid(self):
