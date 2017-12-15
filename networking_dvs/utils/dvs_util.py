@@ -141,6 +141,7 @@ class DVSController(object):
     def __init__(self, dvs_name, connection=None, pool=None, rectify_wait=120):
         self.connection = connection
         self.dvs_name = dvs_name
+        self.max_mtu = None
         self._uuid = None
         self.pool = pool
         self._update_spec_queue = []
@@ -172,10 +173,13 @@ class DVSController(object):
 
     @property
     def mtu(self):
-        self.dvs_obj = self.connection.invoke_api(vim_util, 'get_object_property', self.connection.vim,
-                                                             self._dvs, 'config')
+        if self.max_mtu is None:
+            self.dvs_obj = self.connection.invoke_api(vim_util, 'get_object_property', self.connection.vim,
+                                                                 self._dvs, 'config')
 
-        return self.dvs_obj['maxMtu']
+        self.max_mtu = self.dvs_obj['maxMtu']
+
+        return self.max_mtu
 
     def update_mtu(self, max_mtu):
         try:
