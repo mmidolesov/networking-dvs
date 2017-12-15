@@ -177,7 +177,7 @@ class DVSController(object):
             self.dvs_obj = self.connection.invoke_api(vim_util, 'get_object_property', self.connection.vim,
                                                                  self._dvs, 'config')
 
-        self.max_mtu = self.dvs_obj['maxMtu']
+            self.max_mtu = self.dvs_obj['maxMtu']
 
         return self.max_mtu
 
