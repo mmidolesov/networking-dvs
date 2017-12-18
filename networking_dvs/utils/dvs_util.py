@@ -192,6 +192,7 @@ class DVSController(object):
                 self._dvs, spec=pg_config_info)
 
             self.connection.wait_for_task(pg_update_task)
+            self.max_mtu = max_mtu
         except vmware_exceptions.VimException as e:
             raise exceptions.wrap_wmvare_vim_exception(e)
 
